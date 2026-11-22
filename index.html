@@ -6,6 +6,7 @@
 <title>AI Gaming Video Editor</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{--bg:#14110f;--panel:#1e1a17;--line:#3a322b;--text:#f1e9df;--mute:#a89b8c;--accent:#e8a33d;--ok:#6fbf73;--bad:#e5584f}
 *{box-sizing:border-box}
@@ -56,22 +57,35 @@ header{display:flex;align-items:center;justify-content:space-between}
 #mic.on{background:var(--bad);color:#fff}
 [hidden]{display:none!important}
 
-:root{--bg:#0b0d1a;--panel:#151933;--line:#2b3160;--text:#f1f3ff;--mute:#a7b0da;--accent:#8ab4ff;--g:linear-gradient(135deg,#3b6fe0 0%,#8a5bd0 50%,#c2456b 100%)}
-body{background:radial-gradient(900px 500px at 10% -10%,#27307a66,transparent),radial-gradient(800px 500px at 100% 0%,#7a2a8a55,transparent),var(--bg);background-attachment:fixed}
-h1{font:800 26px/1.1 "Trebuchet MS",Verdana,sans-serif;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:0}
-h2{color:#c4b5fd}
-button{background:var(--g);color:#fff;box-shadow:0 4px 14px #8b5cf655}
-button.alt{background:#ffffff0d;color:var(--text);border:1px solid var(--line);box-shadow:none}
-.ic{background:#ffffff12;border:1px solid var(--line);box-shadow:none;color:var(--text)}
-#settings,.m.a{background:#ffffff0a;backdrop-filter:blur(10px);border:1px solid var(--line)}
-.m.u{background:var(--g);color:#fff}
-input,select,textarea{background:#0b0d1acc}
-input:focus,select:focus,textarea:focus{border-color:#8b5cf6}
-#bar{background:linear-gradient(transparent,var(--bg) 30%)}
-#bar input{background:#151933;border:1px solid #3b4290}
-.chips button{background:#ffffff0d;border:1px solid #4b54a8;color:#dfe3ff}
-.item b{color:#f9a8d4}
-a{color:#93c5fd}
+:root{--bg:#faf9f7;--panel:#fff;--line:#e7e3dc;--text:#1f1d1a;--mute:#76716a;--accent:#d97757;--bad:#c0392b}
+body{background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:8px 14px 0}
+h2{font-size:16px;margin:0 0 10px;color:var(--text)}
+label{color:var(--mute)}
+a{color:#b4532f}
+header{display:flex;justify-content:space-between;align-items:center;min-height:48px}
+button{background:#1f1d1a;color:#fff;border:0;box-shadow:none}
+button.alt{background:#f0eee9;color:var(--text);border:1px solid var(--line)}
+.ic{background:#f0eee9;color:var(--text);border:0}
+.ic.dark{background:#1f1d1a;color:#fff;font-size:20px}
+#settings{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 30px #0000001a;max-height:72vh;overflow:auto}
+input,select,textarea{background:#fff;color:var(--text);border:1px solid var(--line)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
+#hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:20px 0}
+#hero:not([hidden])~#chat{flex:0}
+.hi{font:500 clamp(28px,8vw,40px)/1.15 Georgia,"Times New Roman",serif;margin:0;color:var(--text)}
+.pill{background:#f0eee9;border-radius:999px;padding:10px 20px;color:var(--mute)}
+.pill b{color:var(--text)}
+#qk{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
+#qk button{margin:0}
+.m.u{background:#f0eee9;color:var(--text)}
+.m.a{background:transparent;border:0;backdrop-filter:none;padding:6px 2px}
+.chips button{background:#f0eee9;border:1px solid var(--line);color:var(--text)}
+#bar{position:sticky;bottom:10px;background:#fff;border:1px solid var(--line);border-radius:32px;padding:8px;margin-bottom:calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 2px 14px #00000014;gap:8px}
+#bar input{flex:1;border:0;background:transparent;border-radius:0;padding:10px 6px;font-size:17px}
+#mic.on{background:var(--bad);color:#fff}
+.item b{color:var(--accent)}
+.stage{overflow:hidden;border-radius:12px;margin-top:6px}
+#fxo{position:absolute;inset:0;pointer-events:none}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
 .grid img{width:100%;border-radius:8px;aspect-ratio:1;object-fit:cover}
 #stk{position:absolute;display:none;pointer-events:none;max-width:60%}
@@ -79,7 +93,7 @@ a{color:#93c5fd}
 </head>
 <body>
 <body>
-<header><h1>✨ AI Video Studio</h1><button class="ic" id="gear" aria-label="API सेटिंग्स">⚙</button></header>
+<header><span></span><button class="ic" id="gear" aria-label="API सेटिंग्स">⋮</button></header>
 <div id="settings" hidden>
 <h2>API सेटिंग्स</h2>
 <div class="row"><div><label for="prov">AI</label><select id="prov"><option value="claude">Claude</option><option value="openai">ChatGPT (OpenAI)</option><option value="gemini">Gemini (Google)</option></select></div>
@@ -91,6 +105,8 @@ a{color:#93c5fd}
 <label for="fskey">Freesound key (साउंड और म्यूज़िक ढूँढने के लिए, मुफ़्त)</label><input id="fskey" type="password" autocomplete="off">
 <label for="pxkey">Pixabay key (इफेक्ट वीडियो के लिए, मुफ़्त)</label><input id="pxkey" type="password" autocomplete="off">
 <label for="pxlkey">Pexels key (फ़ुटेज और फ़ोटो के लिए, मुफ़्त)</label><input id="pxlkey" type="password" autocomplete="off">
+<label for="gdkey">Google Drive API key (Drive का एडिटिंग पैक उठाने के लिए)</label><input id="gdkey" type="password" autocomplete="off">
+<p class="sub" style="margin:6px 0 0">console.cloud.google.com में Drive API चालू करके API key बनाएँ। Drive फ़ोल्डर/फ़ाइल "Anyone with the link" पर शेयर होनी चाहिए। फिर चैट में बस Drive का लिंक चिपका दें।</p>
 <p class="sub" style="margin:6px 0 0">मुफ़्त key: <a href="https://freesound.org/apiv2/apply" target="_blank" rel="noopener">Freesound</a>, <a href="https://pixabay.com/api/docs/" target="_blank" rel="noopener">Pixabay</a>, <a href="https://www.pexels.com/api/" target="_blank" rel="noopener">Pexels</a></p>
 <label for="clang">कैप्शन की भाषा</label>
 <select id="clang"><option>हिंदी</option><option>English</option><option>Hinglish (रोमन हिंदी)</option></select>
@@ -108,11 +124,23 @@ a{color:#93c5fd}
 </details>
 <button id="go" hidden></button><textarea id="style" hidden></textarea>
 </div>
-<div class="stage"><video id="player" controls playsinline></video><video id="ovl" muted playsinline></video><canvas id="lotc" width="1280" height="720"></canvas><img id="stk" alt=""><div id="ov"></div><div id="cap"></div></div>
+<div class="stage" id="stage" hidden><video id="player" controls playsinline></video><video id="ovl" muted playsinline></video><canvas id="lotc" width="1280" height="720"></canvas><img id="stk" alt=""><div id="fxo"></div><div id="ov"></div><div id="cap"></div></div>
+<div id="hero">
+<svg width="60" height="60" viewBox="0 0 56 56" aria-hidden="true"><rect x="4" y="10" width="48" height="38" rx="9" fill="#d97757"/><path d="M4 22h48" stroke="#faf9f7" stroke-width="3"/><path d="M12 10l8 12M26 10l8 12M40 10l8 12" stroke="#faf9f7" stroke-width="3"/><path d="M23 30v12l11-6z" fill="#faf9f7"/></svg>
+<h2 class="hi">Welcome, Mr pawan77</h2>
+<div class="pill">Created by <b>pawan77</b></div>
+<div id="qk">
+<button class="alt" data-q="इस वीडियो को बेस्ट गेमिंग इंट्रो की तरह एडिट करो: कैप्शन, टाइटल एनिमेशन, ट्रांज़िशन, साउंड इफेक्ट, म्यूज़िक और कलर ग्रेडिंग के साथ">🎬 गेमिंग इंट्रो एडिट</button>
+<button class="alt" data-q="एक दमदार whoosh साउंड इफेक्ट ढूँढो">🔊 साउंड इफेक्ट</button>
+<button class="alt" data-q="गेमिंग के PNG स्टिकर ढूँढो">🖼 PNG</button>
+<button class="alt" data-q="cinematic city night का फ़ुटेज ढूँढो">🎞 फ़ुटेज</button>
+</div>
+<p class="sub">पहली बार: ऊपर ⋮ दबाकर अपनी API key डालें।</p>
+</div>
 <div id="status"></div>
 <div id="chat" aria-live="polite"></div>
-<div id="bar"><button class="ic" id="att" aria-label="फ़ाइल जोड़ें">＋</button><input id="msg" placeholder="AI से बात करें या एडिट बताएँ..." autocomplete="off"><button class="ic" id="mic" aria-label="माइक">🎤</button><button id="send">भेजें</button></div>
-<input id="all" type="file" accept="video/*,audio/*,image/*,.json" multiple hidden>
+<div id="bar"><button class="ic" id="att" aria-label="फ़ाइल जोड़ें">＋</button><input id="msg" placeholder="Chat करें या एडिट बताएँ..." autocomplete="off"><button class="ic" id="mic" aria-label="माइक">🎤</button><button id="send" class="ic dark" aria-label="भेजें">↑</button></div>
+<input id="all" type="file" accept="video/*,audio/*,image/*,.json,.zip,.ttf,.otf,.woff,.woff2" multiple hidden>
 <canvas id="cv" hidden></canvas>
 <script>
 const $=id=>document.getElementById(id);
@@ -125,7 +153,7 @@ $("prov").onchange=()=>{$("model").value=DEF[$("prov").value];save()};
 $("model").oninput=save;$("key").oninput=save;
 load();
 
-function status(t,err){if(err&&/no credits|insufficient_quota|billing/i.test(t))t="इस AI अकाउंट में क्रेडिट नहीं हैं। ⚙ में AI और आवाज़ सुनने का तरीका, दोनों Gemini चुनें।";if(err&&/high demand|overload/i.test(t))t="Gemini पर अभी बहुत भीड़ है। 1-2 मिनट बाद फिर कोशिश करें।";$("status").textContent=t;$("status").className=err?"err":"";if(err&&typeof say==="function")say("⚠️ "+t,"a",null,true)}
+function status(t,err){if(err&&/no credits|insufficient_quota|billing/i.test(t))t="इस AI अकाउंट में क्रेडिट नहीं हैं। ⋮ में AI और आवाज़ सुनने का तरीका, दोनों Gemini चुनें।";if(err&&/high demand|overload/i.test(t))t="Gemini पर अभी बहुत भीड़ है। 1-2 मिनट बाद फिर कोशिश करें।";$("status").textContent=t;$("status").className=err?"err":"";if(err&&typeof say==="function")say("⚠️ "+t,"a",null,true)}
 
 $("vid").onchange=e=>{const f=e.target.files[0];if(f)$("player").src=URL.createObjectURL(f)};
 $("mus").onchange=e=>{musicUrls=[...e.target.files].map(f=>({name:f.name,url:URL.createObjectURL(f)}))};
@@ -133,20 +161,37 @@ $("sfx").onchange=e=>{sfxNames=[...e.target.files].map(f=>f.name)};
 
 function seek(v,t){return new Promise(r=>{v.onseeked=()=>r();v.currentTime=t})}
 
-async function grabFrames(n){
+async function grabFrames(){
   const v=$("player"),c=$("cv"),x=c.getContext("2d");
   if(!v.duration||!isFinite(v.duration))throw new Error("पहले वीडियो अपलोड करें।");
-  const w=512,h=Math.round(w*v.videoHeight/v.videoWidth);c.width=w;c.height=h;
-  const out=[];
-  for(let i=0;i<n;i++){
-    const t=v.duration*(i+.5)/n;
-    await seek(v,t);x.drawImage(v,0,0,w,h);
-    out.push({t:Math.round(t*10)/10,b64:c.toDataURL("image/jpeg",.6).split(",")[1]});
-    status("फ्रेम निकाल रहा हूँ: "+(i+1)+"/"+n);
+  const N=Math.min(60,Math.max(24,Math.round(v.duration/1.5))),w=512,h=Math.round(w*v.videoHeight/v.videoWidth);
+  const tn=document.createElement("canvas");tn.width=32;tn.height=18;const tx=tn.getContext("2d");
+  c.width=w;c.height=h;let prev=null;const all=[];
+  for(let i=0;i<N;i++){
+    const t=v.duration*(i+.5)/N;await seek(v,t);
+    tx.drawImage(v,0,0,32,18);const d=tx.getImageData(0,0,32,18).data;let df=0;
+    if(prev)for(let k=0;k<d.length;k+=4)df+=Math.abs(d[k]-prev[k])+Math.abs(d[k+1]-prev[k+1])+Math.abs(d[k+2]-prev[k+2]);
+    prev=d;x.drawImage(v,0,0,w,h);
+    all.push({t:Math.round(t*10)/10,df:df/(32*18*3),b64:c.toDataURL("image/jpeg",.6).split(",")[1]});
+    status("वीडियो स्कैन कर रहा हूँ: "+(i+1)+"/"+N);
   }
-  v.currentTime=0;return out;
+  const m=all.reduce((a,b)=>a+b.df,0)/N,sd=Math.sqrt(all.reduce((a,b)=>a+(b.df-m)**2,0)/N);
+  const scenes=all.filter((f,i)=>i>0&&f.df>m+1.5*sd).map(f=>f.t);
+  const pick=new Set([0,N-1]);all.map((f,i)=>[f.df,i]).sort((a,b)=>b[0]-a[0]).slice(0,14).forEach(p=>pick.add(p[1]));for(let i=0;i<N;i+=4)pick.add(i);
+  const out=[...pick].sort((a,b)=>a-b).slice(0,26).map(i=>({t:all[i].t,b64:all[i].b64}));
+  v.currentTime=0;out.scenes=scenes;return out;
 }
-
+function quiet(d,sr){const sec=Math.floor(d.length/sr),r=[];for(let s=0;s<sec;s++){let e=0;for(let i=s*sr;i<(s+1)*sr;i++)e+=d[i]*d[i];r.push(Math.sqrt(e/sr))}const avg=r.reduce((a,b)=>a+b,0)/(r.length||1);return r.map((v,s)=>v<avg*.2?s:-1).filter(s=>s>=0).slice(0,40)}
+function fixPlan(p,dur,scenes){
+  const cl=t=>Math.max(0,Math.min(dur,+t||0));
+  p.cuts=(p.cuts||[]).map(c=>({...c,start:cl(c.start),end:cl(c.end)})).filter(c=>c.end-c.start>=.5).sort((a,b)=>a.start-b.start);
+  const sn=t=>{let b=t,bd=.5;for(const s of scenes||[]){const d=Math.abs(s-t);if(d<bd){bd=d;b=s}}return b};
+  p.cuts.forEach(c=>{c.start=sn(c.start);c.end=sn(c.end)});
+  p.cuts=p.cuts.filter(c=>c.end-c.start>=.5);
+  if(!p.cuts.length)p.cuts=[{start:0,end:dur,note:"पूरी वीडियो"}];
+  for(const k of ["texts","captions","sfx","overlays","stickers","lotties","effects","transitions","music"])p[k]=(p[k]||[]).filter(x=>x&&(x.time!=null||x.start!=null));
+  return p;
+}
 function buildPrompt(frames,dur,loudS,tx){
   return "तुम एक प्रोफेशनल गेमिंग वीडियो एडिटर हो (GTA, Palworld जैसे सिनेमैटिक कंटेंट)। नीचे वीडियो के "+frames.length+" फ्रेम हैं, इनके समय (सेकंड) हैं: "+frames.map(f=>f.t).join(", ")+". वीडियो की कुल लंबाई "+dur.toFixed(1)+" सेकंड है.\n"
   +"यूज़र का स्टाइल: "+($("style").value||"सिनेमैटिक")+"\n"
@@ -159,6 +204,8 @@ function buildPrompt(frames,dur,loudS,tx){
   +"यूज़र की Lottie एनिमेशन (स्टिकर/इफेक्ट): "+(lotties.map(l=>l.name).join(", ")||"कोई नहीं")+". अगर हैं तो \"lotties\":[{\"time\":4,\"duration\":3,\"file\":\"नाम\"}] भी दो, सही पलों पर (धमाका, जीत, लेवल-अप)।\n"
   +"यूट्यूब के लिए भी दो: \"youtube\":{\"title\":\"क्लिक-योग्य टाइटल\",\"description\":\"SEO डिस्क्रिप्शन हैशटैग के साथ\",\"tags\":[\"टैग1\",\"टैग2\"]} (वीडियो की कहानी के हिसाब से)।\n"
   +"PNG/स्टिकर इमेज के लिए \"stickers\":[{\"time\":3,\"duration\":2,\"file\":\"अपलोड की इमेज का नाम (अगर है)\",\"query\":\"english keyword जैसे trophy, crown, fire\",\"x\":0.66,\"y\":0.08,\"size\":0.28}] भी दो (x, y, size स्क्रीन के अनुपात में, 0 से 1)। यूज़र की इमेज: "+(stickerFiles.map(f=>f.name).join(", ")||"कोई नहीं")+"\n"
+  +"अपने आप पकड़े गए सीन-बदलाव के पल (सेकंड): "+((frames.scenes||[]).join(", ")||"कोई नहीं")+"। लगभग शांत सेकंड (कट के लिए अच्छे): "+((window.quietS||[]).join(", ")||"कोई नहीं")+"। यूज़र के अपलोड फ़ॉन्ट (इन्हें प्राथमिकता दो): "+(customFonts.join(", ")||"कोई नहीं")+"\n"
+  +"प्रोफेशनल एडिटिंग के नियम: (1) शुरू के 3 सेकंड में सबसे दमदार पल या टाइटल रखो (हुक)। (2) कट सीन-बदलाव या एक्शन के पल पर रखो, बोलने के बीच में नहीं; हर शॉट 1.5 से 5 सेकंड, रुके और खाली हिस्से हटाओ। (3) ट्रांज़िशन सिर्फ़ सीन या टॉपिक बदलने पर (fade, flash, whip, zoom, glitch), 5 से 8 सेकंड में एक से ज़्यादा नहीं। (4) \"effects\":[{\"time\":6,\"duration\":0.6,\"type\":\"zoom|shake|flash|slowmo|speed\"}] भी दो: तेज़ आवाज़, धमाके और बड़े पलों पर zoom या shake या flash, सबसे दमदार पल पर slowmo। (5) साउंड इफेक्ट ठीक उसी पल पर जब चीज़ दिखे (whoosh ट्रांज़िशन पर, boom धमाके पर)। (6) कैप्शन बोलने के समय से मिलाओ और टाइटल के साथ एक ही समय पर ओवरलैप मत करो। (7) हर time वीडियो की लंबाई के अंदर रखो।\n"
   +"cuts में सिर्फ़ वो हिस्से रखो जो रखने लायक हैं (बोरिंग हिस्से हटाओ)। टेक्स्ट यूज़र की भाषा/स्टाइल में लिखो।";
 }
 
@@ -168,7 +215,7 @@ async function callAI(frames,prompt){
   let r,j;
   if(prov==="claude"){
     r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model,max_tokens:4000,messages:[{role:"user",content:[...frames.map(f=>({type:"image",source:{type:"base64",media_type:"image/jpeg",data:f.b64}})),{type:"text",text:prompt}]}]})});
+      body:JSON.stringify({model,max_tokens:8000,messages:[{role:"user",content:[...frames.map(f=>({type:"image",source:{type:"base64",media_type:"image/jpeg",data:f.b64}})),{type:"text",text:prompt}]}]})});
     j=await r.json();if(!r.ok)throw new Error(j.error?.message||"Claude error");return j.content.map(c=>c.text||"").join("");
   }
   if(prov==="openai"){
@@ -235,7 +282,7 @@ function show(){
    +L("टेक्स्ट",plan.texts,t=>'<div class="item">'+t.time+"s ("+e(t.animation)+"): "+e(t.text)+"</div>")
    +L("ट्रांज़िशन",plan.transitions,t=>'<div class="item">'+t.time+"s: "+e(t.type)+"</div>")
    +L("म्यूज़िक",plan.music,m=>'<div class="item">'+m.time+"s: "+e(m.file)+"</div>")
-   +L("साउंड इफेक्ट",plan.sfx,s=>'<div class="item">'+s.time+"s: "+e(s.file||s.query)+"</div>")+'<div class="item"><b>कलर:</b> '+e(plan.grade)+' | <b>फ़ॉन्ट:</b> '+e(plan.font)+"</div>"+L("कैप्शन",plan.captions,c=>'<div class="item">'+c.start+"s: "+e(c.text)+"</div>")+L("ओवरले इफेक्ट",plan.overlays,o=>'<div class="item">'+o.time+"s: "+e(o.query)+"</div>")+L("Lottie",plan.lotties,o=>'<div class="item">'+o.time+"s: "+e(o.file)+"</div>")+L("PNG/स्टिकर",plan.stickers,o=>'<div class="item">'+o.time+"s: "+e(o.file||o.query)+"</div>");
+   +L("साउंड इफेक्ट",plan.sfx,s=>'<div class="item">'+s.time+"s: "+e(s.file||s.query)+"</div>")+'<div class="item"><b>कलर:</b> '+e(plan.grade)+' | <b>फ़ॉन्ट:</b> '+e(plan.font)+"</div>"+L("कैप्शन",plan.captions,c=>'<div class="item">'+c.start+"s: "+e(c.text)+"</div>")+L("ओवरले इफेक्ट",plan.overlays,o=>'<div class="item">'+o.time+"s: "+e(o.query)+"</div>")+L("Lottie",plan.lotties,o=>'<div class="item">'+o.time+"s: "+e(o.file)+"</div>")+L("PNG/स्टिकर",plan.stickers,o=>'<div class="item">'+o.time+"s: "+e(o.file||o.query)+"</div>")+L("इफेक्ट",plan.effects,o=>'<div class="item">'+o.time+"s: "+e(o.type)+"</div>");
 }
 
 $("go").onclick=async()=>{
@@ -243,10 +290,10 @@ $("go").onclick=async()=>{
   try{
     const v=$("player");const fr=await grabFrames(12);
     status("वीडियो की आवाज़ निकाल रहा हूँ...");
-    const audio=await getAudio();const loudS=loud(audio.data,audio.sr);const tx=await transcribe(audio);
+    const audio=await getAudio();const loudS=loud(audio.data,audio.sr);window.quietS=quiet(audio.data,audio.sr);const tx=await transcribe(audio);
     status("AI वीडियो देख और सुन रहा है, थोड़ा रुकिए...");
     const txt=await callAI(fr,buildPrompt(fr,v.duration,loudS,tx));
-    plan=parsePlan(txt);lastTx=tx;show();status("");onPlan();
+    plan=fixPlan(parsePlan(txt),v.duration,fr.scenes);lastTx=tx;show();status("");onPlan();
   }catch(e){status(e.message,true)}
   $("go").disabled=false;
 };
@@ -320,8 +367,9 @@ async function play(rec){
   v.ontimeupdate=()=>{
     const t=v.currentTime;
     const cur=cuts.find(c=>t>=c.start&&t<c.end);
-    if(!cur){const nx=cuts.find(c=>c.start>t);if(nx)v.currentTime=nx.start;else{v.pause();if(aud)aud.pause();ov.textContent="";cap.textContent="";ovl.style.display="none";ovl.pause();lotc.style.display="none";stk.style.display="none";if(lotAnim){lotAnim.destroy();lotAnim=null}if(rec)finishRec()}}
+    if(!cur){const nx=cuts.find(c=>c.start>t);if(nx)v.currentTime=nx.start;else{v.pause();if(aud)aud.pause();ov.textContent="";cap.textContent="";ovl.style.display="none";ovl.pause();lotc.style.display="none";stk.style.display="none";v.style.transform="";v.playbackRate=1;$("fxo").style.background="transparent";if(lotAnim){lotAnim.destroy();lotAnim=null}if(rec)finishRec()}}
     (plan.sfx||[]).forEach(s=>{const u=urls.get(s);if(u&&!done.has(s)&&t>=s.time&&t<s.time+1){done.add(s);const a=mkAudio(u);a.volume=.8;a.play().catch(()=>{})}});
+    const F=fxState(t);v.style.transform="translate("+(F.dx*100)+"%,"+(F.dy*100)+"%) scale("+F.sc+")";$("fxo").style.background=F.fl>.01?"rgba(255,255,255,"+F.fl+")":F.dip>.01?"rgba(0,0,0,"+F.dip+")":"transparent";if(v.playbackRate!==F.rate)v.playbackRate=F.rate;
     const sk=(plan.stickers||[]).find(x=>t>=x.time&&t<x.time+(x.duration||2)),su=sk&&urls.get(sk);
     if(su){if(stk.dataset.u!==su){stk.dataset.u=su;stk.src=su}stk.style.left=((sk.x??.66)*100)+"%";stk.style.top=((sk.y??.08)*100)+"%";stk.style.width=((sk.size||.28)*100)+"%";stk.style.display="block";stk._s=sk}else{stk.style.display="none";stk.dataset.u=""}
     const lo=(plan.lotties||[]).find(x=>t>=x.time&&t<x.time+(x.duration||3));
@@ -341,7 +389,8 @@ $("lot").onchange=async e=>{for(const f of e.target.files){try{lotties.push({nam
 $("laddurl").onclick=async()=>{for(const u of $("lurl").value.split("\n").map(x=>x.trim()).filter(Boolean)){try{lotties.push({name:u.split("?")[0].split("/").pop()||"lottie.json",data:await (await fetch(u)).json()})}catch(x){status("ये लिंक नहीं खुला (गलत लिंक या CORS): "+u,true);return}}status(lotties.length+" Lottie एनिमेशन तैयार हैं।")};
 function draw(x,W,H){
   const v=$("player"),ovl=$("ovl"),lotc=$("lotc");
-  x.save();x.filter=GRADES[plan.grade]||"none";x.drawImage(v,0,0,W,H);x.restore();
+  const F=fxState(v.currentTime);x.save();x.filter=GRADES[plan.grade]||"none";x.translate(W/2+F.dx*W,H/2+F.dy*H);x.scale(F.sc,F.sc);x.translate(-W/2,-H/2);x.drawImage(v,0,0,W,H);x.restore();
+  if(F.fl>.01||F.dip>.01){x.fillStyle=F.fl>.01?"rgba(255,255,255,"+F.fl+")":"rgba(0,0,0,"+F.dip+")";x.fillRect(0,0,W,H)}
   if(ovl.style.display==="block"&&ovl.readyState>1){x.globalCompositeOperation="screen";x.drawImage(ovl,0,0,W,H);x.globalCompositeOperation="source-over"}
   if(lotc.style.display==="block")x.drawImage(lotc,0,0,W,H);
   const stk=$("stk");if(stk.style.display==="block"&&stk.complete&&stk.naturalWidth&&stk._s){const k=stk._s,w=(k.size||.28)*W;x.drawImage(stk,(k.x??.66)*W,(k.y??.08)*H,w,w*stk.naturalHeight/stk.naturalWidth)}
@@ -403,7 +452,7 @@ callAI=async function(frames,prompt){
 };
 const chat=$("chat");let speak=true,busy=false,hist=[],lastTx="";
 function say(t,who,chips,quiet){
-  const d=document.createElement("div");d.className="m "+(who||"a");d.textContent=t;
+  $("hero").hidden=true;const d=document.createElement("div");d.className="m "+(who||"a");d.textContent=t;
   if(chips){const w=document.createElement("div");w.className="chips";chips.forEach(([l,f])=>{const b=document.createElement("button");b.className="alt";b.textContent=l;b.onclick=f;w.appendChild(b)});d.appendChild(w)}
   chat.appendChild(d);d.scrollIntoView({block:"end"});
   if(who!=="u"&&!quiet&&speak&&window.speechSynthesis&&t){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.slice(0,300));u.lang=/[\u0900-\u097F]/.test(t)?"hi-IN":"en-IN";speechSynthesis.speak(u)}
@@ -416,9 +465,11 @@ function onPlan(){
 }
 async function addFile(f){
   const n=f.name,t=f.type||"";
-  if(t.startsWith("video")||/\.(mp4|mov|webm|mkv)$/i.test(n)){window.vfile=f;$("player").src=URL.createObjectURL(f);say("वीडियो जुड़ गया: "+n,"a",null,true)}
+  if(t.startsWith("video")||/\.(mp4|mov|webm|mkv)$/i.test(n)){window.vfile=f;$("player").src=URL.createObjectURL(f);$("stage").hidden=false;say("वीडियो जुड़ गया: "+n,"a",null,true)}
   else if(t.startsWith("audio")||/\.(mp3|wav|ogg|m4a)$/i.test(n)){const u=URL.createObjectURL(f);musicUrls.push({name:n,url:u});sfxFiles.push({name:n,url:u});sfxNames.push(n);say("ऑडियो जुड़ गया: "+n,"a",null,true)}
   else if(t.startsWith("image")||/\.(png|webp|jpe?g|gif)$/i.test(n)){stickerFiles.push({name:n,url:URL.createObjectURL(f)});say("इमेज/PNG जुड़ गई: "+n,"a",null,true)}
+  else if(/\.(ttf|otf|woff2?)$/i.test(n)){try{const nm=n.replace(/\.[^.]+$/,"");const ff=new FontFace(nm,await f.arrayBuffer());await ff.load();document.fonts.add(ff);customFonts.push(nm);say("फ़ॉन्ट जुड़ गया: "+nm,"a",null,true)}catch(x){say("ये फ़ॉन्ट नहीं खुला: "+n)}}
+  else if(/\.zip$/i.test(n)){try{const z=await JSZip.loadAsync(f);for(const [en,e] of Object.entries(z.files)){if(e.dir)continue;await addFile(new File([await e.async("blob")],en.split("/").pop(),{type:""}))}}catch(x){say("ये ZIP नहीं खुली: "+n)}}
   else if(/\.json$/i.test(n)){try{lotties.push({name:n,data:JSON.parse(await f.text())});say("Lottie एनिमेशन जुड़ गया: "+n,"a",null,true)}catch(x){say("ये सही Lottie JSON नहीं है।")}}
 }
 async function importUrl(u){
@@ -427,10 +478,10 @@ async function importUrl(u){
 }
 async function find(f){
   const k=f.kind||"sfx",q=f.query;status("'"+q+"' ढूँढ रहा हूँ...");
-  if(k==="png"||k==="image"){const L=[...await pxImg(q,6),...await pexImg(q)];status("");if(!L.length){say("'"+q+"' की इमेज नहीं मिली। ⚙ में Pixabay या Pexels की key डालें।");return}showImgs(q,L);return}
-  if(k==="footage"){const fu=await pexVid(q);status("");if(!fu){say("'"+q+"' का फ़ुटेज नहीं मिला। ⚙ में Pexels की key डालें।");return}say("फ़ुटेज मिल गया: "+q,"a",[["⬇ खोलें / डाउनलोड",()=>window.open(fu,"_blank")]],true);return}
+  if(k==="png"||k==="image"){const L=[...await pxImg(q,6),...await pexImg(q)];status("");if(!L.length){say("'"+q+"' की इमेज नहीं मिली। ⋮ में Pixabay या Pexels की key डालें।");return}showImgs(q,L);return}
+  if(k==="footage"){const fu=await pexVid(q);status("");if(!fu){say("'"+q+"' का फ़ुटेज नहीं मिला। ⋮ में Pexels की key डालें।");return}say("फ़ुटेज मिल गया: "+q,"a",[["⬇ खोलें / डाउनलोड",()=>window.open(fu,"_blank")]],true);return}
   const u=k==="video"?await pxFind(q):await fsFind(q,k==="music");status("");
-  if(!u){say("'"+q+"' नहीं मिला। ⚙ में Freesound/Pixabay की key डालें, या freesound.org, pixabay.com, mixkit.co, YouTube Audio Library से खुद डाउनलोड करके ＋ से जोड़ें।");return}
+  if(!u){say("'"+q+"' नहीं मिला। ⋮ में Freesound/Pixabay की key डालें, या freesound.org, pixabay.com, mixkit.co, YouTube Audio Library से खुद डाउनलोड करके ＋ से जोड़ें।");return}
   if(k!=="video"){const nm=q+(k==="music"?" music":" sfx");musicUrls.push({name:nm,url:u});sfxFiles.push({name:nm,url:u});sfxNames.push(nm)}
   say("मिल गया"+(k!=="video"?" और एडिट में जोड़ दिया":"")+": "+q,"a",[["⬇ खोलें / डाउनलोड",()=>window.open(u,"_blank")]],true);
 }
@@ -445,13 +496,14 @@ async function send(){
   const text=$("msg").value.trim();if(!text||busy)return;
   $("msg").value="";say(text,"u");hist.push({r:"यूज़र",t:text});busy=true;
   try{
+    for(const u of text.match(/https?:\/\/(?:drive|docs)\.google\.com\/\S+/g)||[])await driveImport(u);
     for(const u of text.match(/https?:\/\/\S+\.(?:mp3|wav|ogg|m4a|mp4|webm|mov|json)(?:\?\S*)?/gi)||[])await importUrl(u);
     status("AI सोच रहा है...");
     const o=await brain(text);status("");
     hist.push({r:"AI",t:o.reply||""});
     if(o.reply)say(o.reply,"a");
     if(o.action==="analyze"){if(!$("player").src)say("पहले ＋ से अपना वीडियो जोड़ें।");else{$("style").value=text;$("go").click()}}
-    else if(o.action==="update"&&o.plan){plan=o.plan;show();say("प्लान अपडेट हो गया।","a",[["▶ प्रीव्यू",()=>play(false)],["⬇ एक्सपोर्ट",()=>play(true)]],true)}
+    else if(o.action==="update"&&o.plan){plan=fixPlan(o.plan,$("player").duration||1e4,[]);show();say("प्लान अपडेट हो गया।","a",[["▶ प्रीव्यू",()=>play(false)],["⬇ एक्सपोर्ट",()=>play(true)]],true)}
     else if(o.action==="preview"||o.action==="export"){if(plan)play(o.action==="export");else say("पहले एडिट प्लान बनवाएँ।")}
     else if(o.action==="find"&&o.find)await find(o.find);
   }catch(e){status(e.message,true)}
@@ -474,7 +526,7 @@ try{if(!JSON.parse(localStorage.getItem("aiedit")||"{}").asr)dAsr()}catch(e){dAs
 $("prov").addEventListener("change",()=>{dAsr();save()});
 ["key","asr","tkey","fskey","pxkey","clang"].forEach(i=>{$(i).addEventListener("input",save);$(i).addEventListener("change",save)});
 if(!$("key").value)$("settings").hidden=false;
-say("नमस्ते! ＋ से अपना गेमप्ले वीडियो जोड़ें, फिर बोलकर या लिखकर बताइए, जैसे \"इसे सिनेमैटिक एडिट करो\"। पहली बार ऊपर ⚙ में अपनी API key डालें।","a",[["🎬 गेमिंग इंट्रो एडिट करो",()=>quick("इस वीडियो को बेस्ट गेमिंग इंट्रो की तरह एडिट करो: कैप्शन, टाइटल एनिमेशन, साउंड इफेक्ट, म्यूज़िक और कलर ग्रेडिंग के साथ")],["🔊 साउंड इफेक्ट ढूँढो",()=>quick("एक दमदार whoosh साउंड इफेक्ट ढूँढो")],["🖼 PNG ढूँढो",()=>quick("गेमिंग के PNG स्टिकर ढूँढो")],["🎞 फ़ुटेज ढूँढो",()=>quick("cinematic city night का फ़ुटेज ढूँढो")]],true);
+
 let stickerFiles=[];
 const quick=t=>{$("msg").value=t;send()};
 async function pxImg(q,n){
@@ -496,10 +548,51 @@ function showImgs(q,L){
   const d=document.createElement("div");d.className="m a";d.textContent="'"+q+"' की इमेज (टैप करके खोलें और सेव करें):";
   const g=document.createElement("div");g.className="grid";
   L.forEach(i=>{const a=document.createElement("a");a.href=i.full;a.target="_blank";a.rel="noopener";const m=document.createElement("img");m.src=i.thumb;m.alt=q;a.appendChild(m);g.appendChild(a)});
-  d.appendChild(g);chat.appendChild(d);d.scrollIntoView({block:"end"});
+  $("hero").hidden=true;d.appendChild(g);chat.appendChild(d);d.scrollIntoView({block:"end"});
 }
 try{$("pxlkey").value=JSON.parse(localStorage.getItem("aiedit_x")||"{}").p||""}catch(e){}
 $("pxlkey").addEventListener("input",()=>{try{localStorage.setItem("aiedit_x",JSON.stringify({p:$("pxlkey").value}))}catch(e){}});
+let customFonts=[];
+function fxState(t){
+  let sc=1,dx=0,dy=0,fl=0,dip=0,rate=1;
+  for(const e of plan.effects||[]){const d=e.duration||.6;if(t>=e.time&&t<e.time+d){const k=(t-e.time)/d,ty=String(e.type||"").toLowerCase();
+    if(ty.includes("zoom"))sc=Math.max(sc,1+.15*Math.sin(k*Math.PI));
+    else if(ty.includes("shake")){dx=Math.sin(t*60)*.012;dy=Math.cos(t*47)*.012}
+    else if(ty.includes("flash"))fl=Math.max(fl,1-k);
+    else if(ty.includes("slow"))rate=.5;
+    else if(ty.includes("speed"))rate=1.5}}
+  for(const tr of plan.transitions||[]){const d=.5,k=(t-(tr.time-d/2))/d;if(k>=0&&k<=1){const ty=String(tr.type||"").toLowerCase(),sn=Math.sin(k*Math.PI);
+    if(/fade|dip|black/.test(ty))dip=Math.max(dip,sn);
+    else if(/flash|white/.test(ty))fl=Math.max(fl,sn);
+    else if(/zoom|whip|spin|push|slide/.test(ty)){sc=Math.max(sc,1+.2*sn);if(/whip|slide|push/.test(ty))dx=sn*.03}
+    else if(/glitch/.test(ty)){dx=(Math.random()-.5)*.03;fl=Math.max(fl,.25*sn)}}}
+  return{sc,dx,dy,fl,dip,rate};
+}
+async function dlist(id,k,d){
+  const r=await fetch("https://www.googleapis.com/drive/v3/files?pageSize=100&fields=files(id,name,mimeType,size)&q="+encodeURIComponent("'"+id+"' in parents and trashed=false")+"&key="+encodeURIComponent(k));
+  const j=await r.json();if(!r.ok)throw new Error(j.error?.message||"Drive error");
+  let out=[];for(const f of j.files||[]){if(f.mimeType==="application/vnd.google-apps.folder"){if(d<2)out.push(...await dlist(f.id,k,d+1))}else out.push(f)}
+  return out;
+}
+async function driveImport(url){
+  const m=url.match(/\/folders\/([\w-]{10,})/)||url.match(/\/d\/([\w-]{10,})/)||url.match(/[?&]id=([\w-]{10,})/);
+  if(!m){say("Drive लिंक समझ नहीं आया।");return}
+  const k=$("gdkey").value.trim();
+  if(!k){say("Drive से उठाने के लिए ⋮ में Google Drive API key डालें, और फ़ोल्डर या फ़ाइल को \"Anyone with the link\" पर शेयर करें।");return}
+  try{
+    let files;
+    if(/\/folders\//.test(url))files=await dlist(m[1],k,0);
+    else{const r=await fetch("https://www.googleapis.com/drive/v3/files/"+m[1]+"?fields=id,name,mimeType,size&key="+encodeURIComponent(k));const j=await r.json();if(!r.ok)throw new Error(j.error?.message||"Drive error");files=[j]}
+    let n=0;
+    for(const f of files){if(+f.size>80e6)continue;status("Drive से ला रहा हूँ: "+f.name+" ("+(n+1)+"/"+files.length+")");
+      const r=await fetch("https://www.googleapis.com/drive/v3/files/"+f.id+"?alt=media&key="+encodeURIComponent(k));if(!r.ok)continue;
+      await addFile(new File([await r.blob()],f.name,{type:""}));n++}
+    status("");say("Drive से "+n+" फ़ाइलें जुड़ गईं।","a",null,true);
+  }catch(e){status("Drive से नहीं आया: "+e.message,true)}
+}
+document.querySelectorAll("#qk button").forEach(b=>b.onclick=()=>quick(b.dataset.q));
+try{$("gdkey").value=localStorage.getItem("aiedit_g")||""}catch(e){}
+$("gdkey").addEventListener("input",()=>{try{localStorage.setItem("aiedit_g",$("gdkey").value)}catch(e){}});
 </script>
 </body>
 </html>
