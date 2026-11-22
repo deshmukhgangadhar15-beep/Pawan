@@ -55,11 +55,31 @@ header{display:flex;align-items:center;justify-content:space-between}
 #bar input{flex:1;border-radius:22px}#bar button#send{margin:0}
 #mic.on{background:var(--bad);color:#fff}
 [hidden]{display:none!important}
+
+:root{--bg:#0b0d1a;--panel:#151933;--line:#2b3160;--text:#f1f3ff;--mute:#a7b0da;--accent:#8ab4ff;--g:linear-gradient(135deg,#3b6fe0 0%,#8a5bd0 50%,#c2456b 100%)}
+body{background:radial-gradient(900px 500px at 10% -10%,#27307a66,transparent),radial-gradient(800px 500px at 100% 0%,#7a2a8a55,transparent),var(--bg);background-attachment:fixed}
+h1{font:800 26px/1.1 "Trebuchet MS",Verdana,sans-serif;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:0}
+h2{color:#c4b5fd}
+button{background:var(--g);color:#fff;box-shadow:0 4px 14px #8b5cf655}
+button.alt{background:#ffffff0d;color:var(--text);border:1px solid var(--line);box-shadow:none}
+.ic{background:#ffffff12;border:1px solid var(--line);box-shadow:none;color:var(--text)}
+#settings,.m.a{background:#ffffff0a;backdrop-filter:blur(10px);border:1px solid var(--line)}
+.m.u{background:var(--g);color:#fff}
+input,select,textarea{background:#0b0d1acc}
+input:focus,select:focus,textarea:focus{border-color:#8b5cf6}
+#bar{background:linear-gradient(transparent,var(--bg) 30%)}
+#bar input{background:#151933;border:1px solid #3b4290}
+.chips button{background:#ffffff0d;border:1px solid #4b54a8;color:#dfe3ff}
+.item b{color:#f9a8d4}
+a{color:#93c5fd}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.grid img{width:100%;border-radius:8px;aspect-ratio:1;object-fit:cover}
+#stk{position:absolute;display:none;pointer-events:none;max-width:60%}
 </style>
 </head>
 <body>
 <body>
-<header><h1>🎬 AI Video Editor</h1><button class="ic" id="gear" aria-label="API सेटिंग्स">⚙</button></header>
+<header><h1>✨ AI Video Studio</h1><button class="ic" id="gear" aria-label="API सेटिंग्स">⚙</button></header>
 <div id="settings" hidden>
 <h2>API सेटिंग्स</h2>
 <div class="row"><div><label for="prov">AI</label><select id="prov"><option value="claude">Claude</option><option value="openai">ChatGPT (OpenAI)</option><option value="gemini">Gemini (Google)</option></select></div>
@@ -70,7 +90,8 @@ header{display:flex;align-items:center;justify-content:space-between}
 <label for="tkey">आवाज़ सुनने की key (वही AI हो तो खाली छोड़ें)</label><input id="tkey" type="password" autocomplete="off">
 <label for="fskey">Freesound key (साउंड और म्यूज़िक ढूँढने के लिए, मुफ़्त)</label><input id="fskey" type="password" autocomplete="off">
 <label for="pxkey">Pixabay key (इफेक्ट वीडियो के लिए, मुफ़्त)</label><input id="pxkey" type="password" autocomplete="off">
-<p class="sub" style="margin:6px 0 0">मुफ़्त key: <a href="https://freesound.org/apiv2/apply" target="_blank" rel="noopener">Freesound</a>, <a href="https://pixabay.com/api/docs/" target="_blank" rel="noopener">Pixabay</a></p>
+<label for="pxlkey">Pexels key (फ़ुटेज और फ़ोटो के लिए, मुफ़्त)</label><input id="pxlkey" type="password" autocomplete="off">
+<p class="sub" style="margin:6px 0 0">मुफ़्त key: <a href="https://freesound.org/apiv2/apply" target="_blank" rel="noopener">Freesound</a>, <a href="https://pixabay.com/api/docs/" target="_blank" rel="noopener">Pixabay</a>, <a href="https://www.pexels.com/api/" target="_blank" rel="noopener">Pexels</a></p>
 <label for="clang">कैप्शन की भाषा</label>
 <select id="clang"><option>हिंदी</option><option>English</option><option>Hinglish (रोमन हिंदी)</option></select>
 <button class="alt" id="spk">आवाज़ में जवाब: चालू</button>
@@ -87,24 +108,24 @@ header{display:flex;align-items:center;justify-content:space-between}
 </details>
 <button id="go" hidden></button><textarea id="style" hidden></textarea>
 </div>
-<div class="stage"><video id="player" controls playsinline></video><video id="ovl" muted playsinline></video><canvas id="lotc" width="1280" height="720"></canvas><div id="ov"></div><div id="cap"></div></div>
+<div class="stage"><video id="player" controls playsinline></video><video id="ovl" muted playsinline></video><canvas id="lotc" width="1280" height="720"></canvas><img id="stk" alt=""><div id="ov"></div><div id="cap"></div></div>
 <div id="status"></div>
 <div id="chat" aria-live="polite"></div>
 <div id="bar"><button class="ic" id="att" aria-label="फ़ाइल जोड़ें">＋</button><input id="msg" placeholder="AI से बात करें या एडिट बताएँ..." autocomplete="off"><button class="ic" id="mic" aria-label="माइक">🎤</button><button id="send">भेजें</button></div>
-<input id="all" type="file" accept="video/*,audio/*,.json" multiple hidden>
+<input id="all" type="file" accept="video/*,audio/*,image/*,.json" multiple hidden>
 <canvas id="cv" hidden></canvas>
 <script>
 const $=id=>document.getElementById(id);
 const DEF={claude:"claude-sonnet-5-5",openai:"gpt-4o",gemini:"gemini-3.7-flash"};
 let plan=null, musicUrls=[], sfxNames=[];
 
-function load(){try{const s=JSON.parse(localStorage.getItem("aiedit")||"{}");if(s.prov)$("prov").value=s.prov;$("model").value=DEF[$("prov").value];$("key").value=s.key||""}catch(e){$("model").value=DEF.claude}}
-function save(){try{localStorage.setItem("aiedit",JSON.stringify({prov:$("prov").value,model:$("model").value,key:$("key").value}))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem("aiedit")||"{}");if(s.prov)$("prov").value=s.prov;$("model").value=DEF[$("prov").value];["key","asr","tkey","fskey","pxkey","clang"].forEach(i=>{if(s[i]!=null)$(i).value=s[i]})}catch(e){$("model").value=DEF.claude}}
+function save(){try{localStorage.setItem("aiedit",JSON.stringify(Object.fromEntries(["prov","key","asr","tkey","fskey","pxkey","clang"].map(i=>[i,$(i).value]))))}catch(e){}}
 $("prov").onchange=()=>{$("model").value=DEF[$("prov").value];save()};
 $("model").oninput=save;$("key").oninput=save;
 load();
 
-function status(t,err){if(err&&/high demand|overload/i.test(t))t="Gemini पर अभी बहुत भीड़ है। 1-2 मिनट बाद फिर कोशिश करें।";$("status").textContent=t;$("status").className=err?"err":"";if(err&&typeof say==="function")say("⚠️ "+t,"a",null,true)}
+function status(t,err){if(err&&/no credits|insufficient_quota|billing/i.test(t))t="इस AI अकाउंट में क्रेडिट नहीं हैं। ⚙ में AI और आवाज़ सुनने का तरीका, दोनों Gemini चुनें।";if(err&&/high demand|overload/i.test(t))t="Gemini पर अभी बहुत भीड़ है। 1-2 मिनट बाद फिर कोशिश करें।";$("status").textContent=t;$("status").className=err?"err":"";if(err&&typeof say==="function")say("⚠️ "+t,"a",null,true)}
 
 $("vid").onchange=e=>{const f=e.target.files[0];if(f)$("player").src=URL.createObjectURL(f)};
 $("mus").onchange=e=>{musicUrls=[...e.target.files].map(f=>({name:f.name,url:URL.createObjectURL(f)}))};
@@ -137,6 +158,7 @@ function buildPrompt(frames,dur,loudS,tx){
   +"texts की animation अब Animate.css की कोई भी एनिमेशन हो सकती है (जैसे bounceIn, zoomIn, flipInX, backInDown, rubberBand, jackInTheBox, lightSpeedInRight, tada, heartBeat, rollIn, shakeX, wobble) या glitch, typewriter। इसके अलावा \"overlays\":[{\"time\":5,\"duration\":3,\"query\":\"fire sparks\"}] भी दो: ये इंटरनेट से मिलने वाली इफेक्ट वीडियो हैं जो स्क्रीन पर ऊपर से लगती हैं (आग, चिंगारी, धुआँ, लाइट लीक, बारिश; query English में, काले बैकग्राउंड वाली चीज़ें खोजो)।\n"
   +"यूज़र की Lottie एनिमेशन (स्टिकर/इफेक्ट): "+(lotties.map(l=>l.name).join(", ")||"कोई नहीं")+". अगर हैं तो \"lotties\":[{\"time\":4,\"duration\":3,\"file\":\"नाम\"}] भी दो, सही पलों पर (धमाका, जीत, लेवल-अप)।\n"
   +"यूट्यूब के लिए भी दो: \"youtube\":{\"title\":\"क्लिक-योग्य टाइटल\",\"description\":\"SEO डिस्क्रिप्शन हैशटैग के साथ\",\"tags\":[\"टैग1\",\"टैग2\"]} (वीडियो की कहानी के हिसाब से)।\n"
+  +"PNG/स्टिकर इमेज के लिए \"stickers\":[{\"time\":3,\"duration\":2,\"file\":\"अपलोड की इमेज का नाम (अगर है)\",\"query\":\"english keyword जैसे trophy, crown, fire\",\"x\":0.66,\"y\":0.08,\"size\":0.28}] भी दो (x, y, size स्क्रीन के अनुपात में, 0 से 1)। यूज़र की इमेज: "+(stickerFiles.map(f=>f.name).join(", ")||"कोई नहीं")+"\n"
   +"cuts में सिर्फ़ वो हिस्से रखो जो रखने लायक हैं (बोरिंग हिस्से हटाओ)। टेक्स्ट यूज़र की भाषा/स्टाइल में लिखो।";
 }
 
@@ -177,9 +199,9 @@ function wav(s,sr){const b=new ArrayBuffer(44+s.length*2),v=new DataView(b);cons
 function loud(d,sr){const sec=Math.floor(d.length/sr),r=[];for(let s=0;s<sec;s++){let e=0;for(let i=s*sr;i<(s+1)*sr;i++)e+=d[i]*d[i];r.push(Math.sqrt(e/sr))}
   const avg=r.reduce((a,b)=>a+b,0)/(r.length||1);return r.map((v,s)=>({s,v})).filter(x=>x.v>avg*2.2).sort((a,b)=>b.v-a.v).slice(0,12).map(x=>x.s).sort((a,b)=>a-b)}
 async function transcribe(audio){
-  const mode=$("asr").value;if(mode==="off")return "";
+  let mode=$("asr").value;if(mode==="off")return "";if($("prov").value==="gemini")mode="gemini";
   const same=($("prov").value==="openai"&&mode==="whisper")||($("prov").value==="gemini"&&mode==="gemini");
-  const key=$("tkey").value.trim()||(same?$("key").value.trim():"");
+  const key=($("prov").value==="gemini"&&mode==="gemini")?$("key").value.trim():($("tkey").value.trim()||(same?$("key").value.trim():""));
   if(!key)throw new Error("आवाज़ सुनने के लिए "+(mode==="whisper"?"OpenAI":"Gemini")+" की API key डालें।");
   const lo=down(audio.data,audio.sr,16000),CH=16000*300,lines=[],parts=Math.ceil(lo.length/CH);
   for(let p=0;p<parts;p++){
@@ -213,7 +235,7 @@ function show(){
    +L("टेक्स्ट",plan.texts,t=>'<div class="item">'+t.time+"s ("+e(t.animation)+"): "+e(t.text)+"</div>")
    +L("ट्रांज़िशन",plan.transitions,t=>'<div class="item">'+t.time+"s: "+e(t.type)+"</div>")
    +L("म्यूज़िक",plan.music,m=>'<div class="item">'+m.time+"s: "+e(m.file)+"</div>")
-   +L("साउंड इफेक्ट",plan.sfx,s=>'<div class="item">'+s.time+"s: "+e(s.file||s.query)+"</div>")+'<div class="item"><b>कलर:</b> '+e(plan.grade)+' | <b>फ़ॉन्ट:</b> '+e(plan.font)+"</div>"+L("कैप्शन",plan.captions,c=>'<div class="item">'+c.start+"s: "+e(c.text)+"</div>")+L("ओवरले इफेक्ट",plan.overlays,o=>'<div class="item">'+o.time+"s: "+e(o.query)+"</div>")+L("Lottie",plan.lotties,o=>'<div class="item">'+o.time+"s: "+e(o.file)+"</div>");
+   +L("साउंड इफेक्ट",plan.sfx,s=>'<div class="item">'+s.time+"s: "+e(s.file||s.query)+"</div>")+'<div class="item"><b>कलर:</b> '+e(plan.grade)+' | <b>फ़ॉन्ट:</b> '+e(plan.font)+"</div>"+L("कैप्शन",plan.captions,c=>'<div class="item">'+c.start+"s: "+e(c.text)+"</div>")+L("ओवरले इफेक्ट",plan.overlays,o=>'<div class="item">'+o.time+"s: "+e(o.query)+"</div>")+L("Lottie",plan.lotties,o=>'<div class="item">'+o.time+"s: "+e(o.file)+"</div>")+L("PNG/स्टिकर",plan.stickers,o=>'<div class="item">'+o.time+"s: "+e(o.file||o.query)+"</div>");
 }
 
 $("go").onclick=async()=>{
@@ -271,11 +293,13 @@ async function prepAssets(){
     }
   }
   for(const o of plan.overlays||[]){const u=await pxFind(o.query);if(u)urls.set(o,u);else miss.push("ओवरले: "+o.query)}
+  for(const o of plan.stickers||[]){const q=String(o.file||"").toLowerCase();const f=q&&stickerFiles.find(x=>x.name.toLowerCase().includes(q)||q.includes(x.name.toLowerCase()));
+    const u=f?f.url:((await pxImg(o.query||o.file,1))[0]||{}).full;if(u)urls.set(o,u);else miss.push("इमेज: "+(o.query||o.file))}
   return miss;
 }
 async function play(rec){
   if(!plan)return;
-  const v=$("player"),ov=$("ov"),cap=$("cap"),ovl=$("ovl"),lotc=$("lotc");
+  const v=$("player"),ov=$("ov"),cap=$("cap"),ovl=$("ovl"),lotc=$("lotc"),stk=$("stk");
   S.tx=null;S.cap="";let lotKey=null,lotAnim=null;
   const mkAudio=u=>{const a=new Audio(u);if(rec){const n=AC.createMediaElementSource(a);n.connect(AD);n.connect(AC.destination)}return a};
   if(rec){if(!window.MediaRecorder){status("इस ब्राउज़र में एक्सपोर्ट नहीं चलता, Chrome इस्तेमाल करें।",true);return}
@@ -283,7 +307,7 @@ async function play(rec){
   status("फ़ॉन्ट और साउंड ला रहा हूँ...");
   const miss=await prepAssets();
   if(rec){status("एक्सपोर्ट के लिए साउंड और इफेक्ट सेव कर रहा हूँ...");
-    for(const l of [...(plan.music||[]),...(plan.sfx||[]),...(plan.overlays||[])]){const u=urls.get(l);
+    for(const l of [...(plan.music||[]),...(plan.sfx||[]),...(plan.overlays||[]),...(plan.stickers||[])]){const u=urls.get(l);
       if(u&&!u.startsWith("blob:")){try{urls.set(l,URL.createObjectURL(await (await fetch(u)).blob()))}catch(e){urls.delete(l);miss.push("एक्सपोर्ट में नहीं जा सका: "+(l.query||l.file))}}}}
   status(miss.length?"ये चीज़ें नहीं मिलीं: "+[...new Set(miss)].join(", ")+". Freesound/Pixabay key डालें या खुद अपलोड करें।":"प्रीव्यू चल रहा है।",miss.length>0);
   v.style.filter=GRADES[plan.grade]||"";
@@ -296,8 +320,10 @@ async function play(rec){
   v.ontimeupdate=()=>{
     const t=v.currentTime;
     const cur=cuts.find(c=>t>=c.start&&t<c.end);
-    if(!cur){const nx=cuts.find(c=>c.start>t);if(nx)v.currentTime=nx.start;else{v.pause();if(aud)aud.pause();ov.textContent="";cap.textContent="";ovl.style.display="none";ovl.pause();lotc.style.display="none";if(lotAnim){lotAnim.destroy();lotAnim=null}if(rec)finishRec()}}
+    if(!cur){const nx=cuts.find(c=>c.start>t);if(nx)v.currentTime=nx.start;else{v.pause();if(aud)aud.pause();ov.textContent="";cap.textContent="";ovl.style.display="none";ovl.pause();lotc.style.display="none";stk.style.display="none";if(lotAnim){lotAnim.destroy();lotAnim=null}if(rec)finishRec()}}
     (plan.sfx||[]).forEach(s=>{const u=urls.get(s);if(u&&!done.has(s)&&t>=s.time&&t<s.time+1){done.add(s);const a=mkAudio(u);a.volume=.8;a.play().catch(()=>{})}});
+    const sk=(plan.stickers||[]).find(x=>t>=x.time&&t<x.time+(x.duration||2)),su=sk&&urls.get(sk);
+    if(su){if(stk.dataset.u!==su){stk.dataset.u=su;stk.src=su}stk.style.left=((sk.x??.66)*100)+"%";stk.style.top=((sk.y??.08)*100)+"%";stk.style.width=((sk.size||.28)*100)+"%";stk.style.display="block";stk._s=sk}else{stk.style.display="none";stk.dataset.u=""}
     const lo=(plan.lotties||[]).find(x=>t>=x.time&&t<x.time+(x.duration||3));
     if(lo&&lo!==lotKey){const q=String(lo.file||"").toLowerCase();const d=(q&&lotties.find(z=>z.name.toLowerCase().includes(q)||q.includes(z.name.toLowerCase())))||lotties[0];
       if(d){if(lotAnim)lotAnim.destroy();const c2=lotc.getContext("2d");c2.clearRect(0,0,lotc.width,lotc.height);
@@ -318,6 +344,7 @@ function draw(x,W,H){
   x.save();x.filter=GRADES[plan.grade]||"none";x.drawImage(v,0,0,W,H);x.restore();
   if(ovl.style.display==="block"&&ovl.readyState>1){x.globalCompositeOperation="screen";x.drawImage(ovl,0,0,W,H);x.globalCompositeOperation="source-over"}
   if(lotc.style.display==="block")x.drawImage(lotc,0,0,W,H);
+  const stk=$("stk");if(stk.style.display==="block"&&stk.complete&&stk.naturalWidth&&stk._s){const k=stk._s,w=(k.size||.28)*W;x.drawImage(stk,(k.x??.66)*W,(k.y??.08)*H,w,w*stk.naturalHeight/stk.naturalWidth)}
   if(S.tx){
     const a=String(S.tx.animation||"pop"),k=Math.min(1,(performance.now()-S.t0)/500),fs=Math.round(W*.05);
     x.save();x.font="700 "+fs+"px '"+(S.tx.font||plan.font||"Bebas Neue")+"',Impact,sans-serif";x.textAlign="center";x.textBaseline="bottom";
@@ -391,6 +418,7 @@ async function addFile(f){
   const n=f.name,t=f.type||"";
   if(t.startsWith("video")||/\.(mp4|mov|webm|mkv)$/i.test(n)){window.vfile=f;$("player").src=URL.createObjectURL(f);say("वीडियो जुड़ गया: "+n,"a",null,true)}
   else if(t.startsWith("audio")||/\.(mp3|wav|ogg|m4a)$/i.test(n)){const u=URL.createObjectURL(f);musicUrls.push({name:n,url:u});sfxFiles.push({name:n,url:u});sfxNames.push(n);say("ऑडियो जुड़ गया: "+n,"a",null,true)}
+  else if(t.startsWith("image")||/\.(png|webp|jpe?g|gif)$/i.test(n)){stickerFiles.push({name:n,url:URL.createObjectURL(f)});say("इमेज/PNG जुड़ गई: "+n,"a",null,true)}
   else if(/\.json$/i.test(n)){try{lotties.push({name:n,data:JSON.parse(await f.text())});say("Lottie एनिमेशन जुड़ गया: "+n,"a",null,true)}catch(x){say("ये सही Lottie JSON नहीं है।")}}
 }
 async function importUrl(u){
@@ -399,6 +427,8 @@ async function importUrl(u){
 }
 async function find(f){
   const k=f.kind||"sfx",q=f.query;status("'"+q+"' ढूँढ रहा हूँ...");
+  if(k==="png"||k==="image"){const L=[...await pxImg(q,6),...await pexImg(q)];status("");if(!L.length){say("'"+q+"' की इमेज नहीं मिली। ⚙ में Pixabay या Pexels की key डालें।");return}showImgs(q,L);return}
+  if(k==="footage"){const fu=await pexVid(q);status("");if(!fu){say("'"+q+"' का फ़ुटेज नहीं मिला। ⚙ में Pexels की key डालें।");return}say("फ़ुटेज मिल गया: "+q,"a",[["⬇ खोलें / डाउनलोड",()=>window.open(fu,"_blank")]],true);return}
   const u=k==="video"?await pxFind(q):await fsFind(q,k==="music");status("");
   if(!u){say("'"+q+"' नहीं मिला। ⚙ में Freesound/Pixabay की key डालें, या freesound.org, pixabay.com, mixkit.co, YouTube Audio Library से खुद डाउनलोड करके ＋ से जोड़ें।");return}
   if(k!=="video"){const nm=q+(k==="music"?" music":" sfx");musicUrls.push({name:nm,url:u});sfxFiles.push({name:nm,url:u});sfxNames.push(nm)}
@@ -407,7 +437,7 @@ async function find(f){
 async function brain(text){
   const ctx={video:!!$("player").src,duration:$("player").duration||0,music:musicUrls.map(m=>m.name),sfx:sfxFiles.map(m=>m.name),lottie:lotties.map(l=>l.name),plan};
   const sys="तुम एक दोस्ताना एक्सपर्ट गेमिंग वीडियो एडिटिंग AI असिस्टेंट हो (यूज़र GTA, Palworld जैसे सिनेमैटिक वीडियो बनाता है)। यूज़र की भाषा (हिंदी/हिंग्लिश) में छोटा जवाब दो।\nऐप की स्थिति: "+JSON.stringify(ctx).slice(0,6000)+"\nवीडियो में बोले गए शब्द: "+lastTx.slice(0,2500)+"\nपिछली बातचीत:\n"+hist.slice(-6).map(h=>h.r+": "+h.t).join("\n")+"\nयूज़र: "+text
-   +"\n\nसिर्फ़ JSON दो: {\"reply\":\"जवाब\",\"action\":\"none|analyze|preview|export|find|update\",\"find\":{\"kind\":\"sfx|music|video\",\"query\":\"english keywords\"},\"plan\":{पूरा बदला हुआ प्लान, सिर्फ़ action=update पर}}। नियम: वीडियो एडिट कराना या नया प्लान बनाना हो तो analyze; प्लान में बदलाव माँगे तो update और पूरा नया plan दो; प्रीव्यू या एक्सपोर्ट माँगे तो वही action; कोई साउंड, म्यूज़िक या इफेक्ट वीडियो चाहिए तो find; टाइटल, डिस्क्रिप्शन या टैग माँगे तो reply में दो; आम सवाल पर action none। कॉपीराइट वाला कंटेंट (गाने, मूवी क्लिप) डाउनलोड नहीं करवा सकते: ऐसा माँगे तो विनम्रता से मना करो और रॉयल्टी-फ्री विकल्प सुझाओ (Freesound CC0, Pixabay, YouTube Audio Library)।";
+   +"\n\nसिर्फ़ JSON दो: {\"reply\":\"जवाब\",\"action\":\"none|analyze|preview|export|find|update\",\"find\":{\"kind\":\"sfx|music|video|png|footage\",\"query\":\"english keywords\"},\"plan\":{पूरा बदला हुआ प्लान, सिर्फ़ action=update पर}}। नियम: वीडियो एडिट कराना या नया प्लान बनाना हो तो analyze; प्लान में बदलाव माँगे तो update और पूरा नया plan दो; प्रीव्यू या एक्सपोर्ट माँगे तो वही action; कोई साउंड, म्यूज़िक, इफेक्ट वीडियो, PNG/इमेज (kind png) या फ़ुटेज (kind footage) चाहिए तो find; टाइटल, डिस्क्रिप्शन या टैग माँगे तो reply में दो; आम सवाल पर action none। कॉपीराइट वाला कंटेंट (गाने, मूवी क्लिप) डाउनलोड नहीं करवा सकते: ऐसा माँगे तो विनम्रता से मना करो और रॉयल्टी-फ्री विकल्प सुझाओ (Freesound CC0, Pixabay, YouTube Audio Library)।";
   const t=await callAI([],sys);
   try{return parsePlan(t)}catch(e){return{reply:t,action:"none"}}
 }
@@ -439,8 +469,37 @@ $("mic").onclick=()=>{
   r.onresult=e=>{$("msg").value=e.results[0][0].transcript;send()};
   r.onend=r.onerror=()=>$("mic").classList.remove("on");r.start();
 };
+const dAsr=()=>{const p=$("prov").value;$("asr").value=p==="gemini"?"gemini":p==="openai"?"whisper":"off"};
+try{if(!JSON.parse(localStorage.getItem("aiedit")||"{}").asr)dAsr()}catch(e){dAsr()}
+$("prov").addEventListener("change",()=>{dAsr();save()});
+["key","asr","tkey","fskey","pxkey","clang"].forEach(i=>{$(i).addEventListener("input",save);$(i).addEventListener("change",save)});
 if(!$("key").value)$("settings").hidden=false;
-say("नमस्ते! ＋ से अपना गेमप्ले वीडियो जोड़ें, फिर बोलकर या लिखकर बताइए, जैसे \"इसे सिनेमैटिक एडिट करो\"। पहली बार ऊपर ⚙ में अपनी API key डालें।","a",null,true);
+say("नमस्ते! ＋ से अपना गेमप्ले वीडियो जोड़ें, फिर बोलकर या लिखकर बताइए, जैसे \"इसे सिनेमैटिक एडिट करो\"। पहली बार ऊपर ⚙ में अपनी API key डालें।","a",[["🎬 गेमिंग इंट्रो एडिट करो",()=>quick("इस वीडियो को बेस्ट गेमिंग इंट्रो की तरह एडिट करो: कैप्शन, टाइटल एनिमेशन, साउंड इफेक्ट, म्यूज़िक और कलर ग्रेडिंग के साथ")],["🔊 साउंड इफेक्ट ढूँढो",()=>quick("एक दमदार whoosh साउंड इफेक्ट ढूँढो")],["🖼 PNG ढूँढो",()=>quick("गेमिंग के PNG स्टिकर ढूँढो")],["🎞 फ़ुटेज ढूँढो",()=>quick("cinematic city night का फ़ुटेज ढूँढो")]],true);
+let stickerFiles=[];
+const quick=t=>{$("msg").value=t;send()};
+async function pxImg(q,n){
+  const k=$("pxkey").value.trim();if(!k||!q)return[];
+  try{const r=await fetch("https://pixabay.com/api/?key="+encodeURIComponent(k)+"&q="+encodeURIComponent(q)+"&image_type=illustration&safesearch=true&per_page="+Math.max(3,n||4));
+    const j=await r.json();return(j.hits||[]).slice(0,n||4).map(h=>({thumb:h.previewURL,full:h.largeImageURL||h.webformatURL}))}catch(e){return[]}
+}
+async function pexImg(q){
+  const k=$("pxlkey").value.trim();if(!k)return[];
+  try{const r=await fetch("https://api.pexels.com/v1/search?per_page=3&query="+encodeURIComponent(q),{headers:{Authorization:k}});
+    const j=await r.json();return(j.photos||[]).map(x=>({thumb:x.src.small,full:x.src.large2x||x.src.original}))}catch(e){return[]}
+}
+async function pexVid(q){
+  const k=$("pxlkey").value.trim();if(!k)return null;
+  try{const r=await fetch("https://api.pexels.com/videos/search?per_page=1&query="+encodeURIComponent(q),{headers:{Authorization:k}});
+    const j=await r.json(),v=j.videos&&j.videos[0],f=v&&(v.video_files.find(x=>x.quality==="hd")||v.video_files[0]);return f&&f.link}catch(e){return null}
+}
+function showImgs(q,L){
+  const d=document.createElement("div");d.className="m a";d.textContent="'"+q+"' की इमेज (टैप करके खोलें और सेव करें):";
+  const g=document.createElement("div");g.className="grid";
+  L.forEach(i=>{const a=document.createElement("a");a.href=i.full;a.target="_blank";a.rel="noopener";const m=document.createElement("img");m.src=i.thumb;m.alt=q;a.appendChild(m);g.appendChild(a)});
+  d.appendChild(g);chat.appendChild(d);d.scrollIntoView({block:"end"});
+}
+try{$("pxlkey").value=JSON.parse(localStorage.getItem("aiedit_x")||"{}").p||""}catch(e){}
+$("pxlkey").addEventListener("input",()=>{try{localStorage.setItem("aiedit_x",JSON.stringify({p:$("pxlkey").value}))}catch(e){}});
 </script>
 </body>
 </html>
