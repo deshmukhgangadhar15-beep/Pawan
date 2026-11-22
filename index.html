@@ -104,7 +104,7 @@ $("prov").onchange=()=>{$("model").value=DEF[$("prov").value];save()};
 $("model").oninput=save;$("key").oninput=save;
 load();
 
-function status(t,err){$("status").textContent=t;$("status").className=err?"err":"";if(err&&typeof say==="function")say("⚠️ "+t,"a",null,true)}
+function status(t,err){if(err&&/high demand|overload/i.test(t))t="Gemini पर अभी बहुत भीड़ है। 1-2 मिनट बाद फिर कोशिश करें।";$("status").textContent=t;$("status").className=err?"err":"";if(err&&typeof say==="function")say("⚠️ "+t,"a",null,true)}
 
 $("vid").onchange=e=>{const f=e.target.files[0];if(f)$("player").src=URL.createObjectURL(f)};
 $("mus").onchange=e=>{musicUrls=[...e.target.files].map(f=>({name:f.name,url:URL.createObjectURL(f)}))};
@@ -351,12 +351,27 @@ function finishRec(){if(!R)return;const r=R;R=null;cancelAnimationFrame(r.raf);r
 $("prev").onclick=()=>play(false);
 $("exp").onclick=()=>play(true);
 const MODELS={claude:["claude-sonnet-5-5","claude-sonnet-4-5","claude-haiku-4-5"],openai:["gpt-4o","gpt-4o-mini"],gemini:["gemini-3.7-flash","gemini-3.6-flash","gemini-3.5-flash","gemini-2.5-flash"]};
+const _fetch=window.fetch.bind(window),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const RETRY=/high demand|overload|unavailable|exhausted|quota|rate|try again|not found|not supported|no longer|deprecat/i;
+window.fetch=async function(u,o){
+  const g=typeof u==="string"&&u.match(/(generativelanguage\.googleapis\.com\/v1beta\/models\/)([^:]+)(:.*)/);
+  if(!g)return _fetch(u,o);
+  const ms=[...new Set([g[2],...MODELS.gemini])];let r;
+  for(let round=0;round<2;round++)for(const m of ms){
+    r=await _fetch(u.replace(g[0],g[1]+m+g[3]),o);
+    if(r.ok)return r;
+    let msg="";try{msg=(await r.clone().json()).error?.message||""}catch(e){}
+    if(!(RETRY.test(msg)||[429,503,404].includes(r.status)))return r;
+    status("Gemini पर भीड़ है, दूसरा मॉडल आज़मा रहा हूँ...");await sleep(1500);
+  }
+  return r;
+};
 const callOne=callAI;const okModel={};
 callAI=async function(frames,prompt){
-  const p=$("prov").value,ms=[...new Set([okModel[p],...MODELS[p]].filter(Boolean))];let last;
+  const p=$("prov").value,ms=p==="gemini"?[MODELS.gemini[0]]:[...new Set([okModel[p],...MODELS[p]].filter(Boolean))];let last;
   for(const m of ms){$("model").value=m;
     try{const r=await callOne(frames,prompt);okModel[p]=m;return r}
-    catch(e){last=e;if(!/not found|not supported|no longer|does not exist|404|deprecat|unavailable/i.test(e.message))throw e}}
+    catch(e){last=e;if(!/not found|not supported|no longer|does not exist|404|deprecat|unavailable|high demand|overload|529|503|429|exhausted/i.test(e.message))throw e}}
   throw last;
 };
 const chat=$("chat");let speak=true,busy=false,hist=[],lastTx="";
